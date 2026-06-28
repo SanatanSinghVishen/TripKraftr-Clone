@@ -4,8 +4,6 @@ import { getRevenueSummary } from '../controllers/revenueController.js';
 
 const router = Router();
 
-router.use(authenticateHO);
-
-router.get('/properties/:id/revenue', getRevenueSummary);
+router.get('/properties/:id/revenue', authenticateHO, getRevenueSummary);
 
 export default router;

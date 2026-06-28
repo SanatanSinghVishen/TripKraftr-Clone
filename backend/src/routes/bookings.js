@@ -10,16 +10,13 @@ import {
 
 const router = Router();
 
-// All booking routes require HO authentication
-router.use(authenticateHO);
-
 // Property-scoped booking routes
-router.post('/properties/:id/bookings', createBooking);
-router.get('/properties/:id/bookings', listBookings);
-router.get('/properties/:id/availability', getAvailability);
+router.post('/properties/:id/bookings', authenticateHO, createBooking);
+router.get('/properties/:id/bookings', authenticateHO, listBookings);
+router.get('/properties/:id/availability', authenticateHO, getAvailability);
 
 // Booking-specific routes
-router.patch('/bookings/:id', updateBooking);
-router.delete('/bookings/:id', cancelBooking);
+router.patch('/bookings/:id', authenticateHO, updateBooking);
+router.delete('/bookings/:id', authenticateHO, cancelBooking);
 
 export default router;

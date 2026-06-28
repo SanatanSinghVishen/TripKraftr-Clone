@@ -9,15 +9,12 @@ import {
 
 const router = Router();
 
-// All room routes require HO authentication
-router.use(authenticateHO);
-
 // Routes scoped to a property
-router.post('/properties/:id/rooms', addRoomType);
-router.get('/properties/:id/rooms', listRoomTypes);
+router.post('/properties/:id/rooms', authenticateHO, addRoomType);
+router.get('/properties/:id/rooms', authenticateHO, listRoomTypes);
 
 // Routes scoped to a specific room type
-router.patch('/rooms/:id', updateRoomType);
-router.delete('/rooms/:id', deleteRoomType);
+router.patch('/rooms/:id', authenticateHO, updateRoomType);
+router.delete('/rooms/:id', authenticateHO, deleteRoomType);
 
 export default router;
