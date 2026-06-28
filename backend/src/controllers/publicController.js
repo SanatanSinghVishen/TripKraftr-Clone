@@ -9,7 +9,7 @@ import Booking from '../models/Booking.js';
 export const getPropertyBySlug = async (req, res) => {
   try {
     const property = await Property.findOne({ slug: req.params.slug })
-      .select('name contactNumber whatsappNumber state region slug rooms');
+      .select('name contactNumber whatsappNumber state region address slug rooms');
 
     if (!property) {
       return res.status(404).json({ error: 'Property not found' });
@@ -22,14 +22,8 @@ export const getPropertyBySlug = async (req, res) => {
       whatsappNumber: property.whatsappNumber,
       state: property.state,
       region: property.region,
+      address: property.address,
       slug: property.slug,
-      roomTypes: property.rooms.map(r => ({
-        id: r._id,
-        name: r.name,
-        pricePerNight: r.pricePerNight,
-        mealPlan: r.mealPlan,
-        totalRooms: r.totalRooms,
-      })),
     });
   } catch (err) {
     console.error('Public property error:', err);
@@ -50,16 +44,27 @@ export const checkAvailability = async (req, res) => {
       return res.status(404).json({ error: 'Property not found' });
     }
 
-    const { checkin, nights, rooms: roomsNeeded } = req.query;
+    const { checkin, nights, guests, rooms: roomsNeeded } = req.query;
 
-    if (!checkin || !nights) {
-      return res.status(400).json({
-        error: 'checkin and nights query parameters are required',
-      });
+    if (!checkin) {
+      return res.status(400).json({ error: 'checkin date is required' });
     }
 
     const checkinDate = new Date(checkin);
-    const nightsCount = parseInt(nights, 10);
+    if (isNaN(checkinDate.getTime())) {
+      return res.status(400).json({ error: 'Invalid checkin date' });
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (checkinDate < today) {
+      return res.status(400).json({ error: "Check-in date can't be in the past." });
+    }
+
+    const nightsCount = Math.max(1, parseInt(nights, 10) || 1);
+    const guestsCount = Math.max(1, parseInt(guests, 10) || 2);
+    const roomsCount = Math.max(1, parseInt(roomsNeeded, 10) || 1);
+    
     const checkoutDate = new Date(checkinDate);
     checkoutDate.setDate(checkoutDate.getDate() + nightsCount);
 
@@ -80,29 +85,28 @@ export const checkAvailability = async (req, res) => {
       }
     }
 
-    const roomsNeededInt = parseInt(roomsNeeded || '1', 10);
-
-    const availability = property.rooms.map(room => {
+    const roomTypes = property.rooms.map(room => {
       const booked = bookedMap.get(room._id.toString()) || 0;
       const freeCount = Math.max(0, room.totalRooms - booked);
+      const meetsRoomsNeeded = freeCount >= roomsCount;
+      const meetsOccupancy = room.maxOccupancy ? (room.maxOccupancy * roomsCount >= guestsCount) : true;
 
       return {
-        roomTypeId: room._id,
+        id: room._id,
         name: room.name,
-        pricePerNight: room.pricePerNight,
+        pricePerNight: Math.floor(room.pricePerNight / 100),
         mealPlan: room.mealPlan,
         totalRooms: room.totalRooms,
         freeCount,
-        meetsNeeded: freeCount >= roomsNeededInt,
+        meetsRoomsNeeded,
+        meetsOccupancy,
       };
     });
 
     res.json({
-      propertyName: property.name,
-      checkin: checkinDate.toISOString(),
-      checkout: checkoutDate.toISOString(),
-      nights: nightsCount,
-      availability,
+      checkinDate: checkinDate.toISOString(),
+      checkoutDate: checkoutDate.toISOString(),
+      roomTypes,
     });
   } catch (err) {
     console.error('Check availability error:', err);

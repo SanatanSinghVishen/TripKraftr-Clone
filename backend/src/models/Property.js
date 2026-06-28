@@ -22,6 +22,11 @@ const roomTypeSchema = new mongoose.Schema({
     enum: ['only_room', 'breakfast', 'breakfast_dinner', 'all_meals'],
     default: 'only_room',
   },
+  maxOccupancy: {
+    type: Number,
+    default: 2,
+    min: 1,
+  }
 });
 
 const propertySchema = new mongoose.Schema({
