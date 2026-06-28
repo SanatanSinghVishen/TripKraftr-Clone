@@ -44,10 +44,12 @@ async function apiFetch(path, options = {}) {
   // Handle 401 — redirect to login
   if (response.status === 401) {
     clearToken();
-    // Don't redirect if already on landing, public, admin, or auth pages
+    // Only force redirect if they are on a protected page
     const p = window.location.pathname;
-    if (p !== '/' && !p.startsWith('/p/') && !p.startsWith('/admin') && !p.startsWith('/auth')) {
+    if (p.startsWith('/dashboard')) {
       window.location.href = '/';
+    } else if (p === '/admin/dashboard') {
+      window.location.href = '/admin';
     }
     throw new Error('Authentication required');
   }
