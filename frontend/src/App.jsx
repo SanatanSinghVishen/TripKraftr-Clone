@@ -72,7 +72,7 @@ function AppRoutes() {
       />
 
       {/* Public Availability Page — must be last to catch /:slug */}
-      <Route path="/p/:slug" element={<AvailabilityPage />} />
+      <Route path="/:slug" element={<AvailabilityPage />} />
 
       {/* Fallback */}
       <Route path="*" element={<Navigate to="/" replace />} />
