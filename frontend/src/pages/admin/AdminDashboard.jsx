@@ -8,6 +8,7 @@ export default function AdminDashboard() {
   const [properties, setProperties] = useState([]);
   const [loading, setLoading] = useState(true);
   const [updatingPlan, setUpdatingPlan] = useState(null);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     loadData();
@@ -16,14 +17,20 @@ export default function AdminDashboard() {
   async function loadData() {
     try {
       setLoading(true);
-      const [overviewData, propertiesData] = await Promise.all([
+      setError(null);
+      // Fetch independently so one failure doesn't block the other
+      const [overviewResult, propertiesResult] = await Promise.allSettled([
         admin.getOverview(),
         admin.listProperties(),
       ]);
-      setOverview(overviewData);
-      setProperties(propertiesData);
+      if (overviewResult.status === 'fulfilled') setOverview(overviewResult.value);
+      else console.error('Overview error:', overviewResult.reason);
+      
+      if (propertiesResult.status === 'fulfilled') setProperties(propertiesResult.value);
+      else setError(propertiesResult.reason?.message || 'Failed to load properties');
     } catch (err) {
       console.error('Admin load error:', err);
+      setError(err.message);
     } finally {
       setLoading(false);
     }
@@ -88,6 +95,12 @@ export default function AdminDashboard() {
         <h1 className="text-2xl font-bold text-[var(--color-heading)] mb-6">
           Dashboard Overview
         </h1>
+
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4 text-sm text-red-700">
+            {error}
+          </div>
+        )}
 
         {/* Overview cards */}
         {overview && (
