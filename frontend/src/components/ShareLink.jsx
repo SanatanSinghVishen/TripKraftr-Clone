@@ -2,17 +2,17 @@ import { useState } from 'react';
 
 export default function ShareLink({ slug }) {
   const [copied, setCopied] = useState(false);
-  const fullUrl = `availnow.in/${slug}`;
+  const fullUrl = `${window.location.origin}/${slug}`;
 
   async function handleCopy() {
     try {
-      await navigator.clipboard.writeText(`https://${fullUrl}`);
+      await navigator.clipboard.writeText(fullUrl);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
       // Fallback for older browsers
       const input = document.createElement('input');
-      input.value = `https://${fullUrl}`;
+      input.value = fullUrl;
       document.body.appendChild(input);
       input.select();
       document.execCommand('copy');
